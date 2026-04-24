@@ -258,4 +258,4 @@ locallua-iceq --no-tui                              # Rich REPL вместо Tex
 
 ## Лицензия
 
-MIT
+Apache 2.0
