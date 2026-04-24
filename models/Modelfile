@@ -1,0 +1,23 @@
+# ICEQ fine-tuned model (Qwen3-4B-Instruct-2507 + LoRA merged + Q8_0)
+#
+# Build the Ollama model from this file:
+#   cd localscript-agent/models
+#   ollama create iceq-sft -f Modelfile
+#
+# Non-thinking variant — does not declare thinking capability. Requests
+# with `think: true` will be rejected by Ollama (handled gracefully in
+# localscript/llm.py with automatic fallback).
+
+FROM ./model-Q8_0.gguf
+
+PARAMETER num_ctx 4096
+PARAMETER temperature 0.6
+PARAMETER stop <|im_end|>
+PARAMETER stop <|im_start|>
+
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ range .Messages }}<|im_start|>{{ .Role }}
+{{ .Content }}<|im_end|>
+{{ end }}<|im_start|>assistant
+"""

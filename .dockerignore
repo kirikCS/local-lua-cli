@@ -1,0 +1,23 @@
+# Keep Docker build context small
+__pycache__
+*.pyc
+.venv/
+.iceq/
+test_lua/
+tests/
+.claude/
+.git/
+.github/
+dist/
+build/
+*.egg-info/
+models/
+*.gguf
+*.bin
+*.safetensors
+CHANGELOG.md
+benchmark.py
+benchmark*.py
+competition_*.txt
+benchmark_results.txt
+*.jsonl

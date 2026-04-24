@@ -1,0 +1,55 @@
+# ICEQ — two independent services, two Dockerfiles.
+#
+# Ollama is expected to run on the HOST (not inside compose) because the
+# model weights live in ~/.ollama and starting Ollama in a container
+# requires re-downloading 4+ GB of models on every first-run.
+#
+# Usage:
+#   docker compose build                              # build both images
+#   docker compose up server                          # run API server (daemon)
+#   docker compose run --rm -it cli                   # interactive CLI session
+#   docker compose run --rm -it cli --model iceq-sft  # override model
+#
+# The host's Ollama is reached via host.docker.internal (Docker Desktop
+# for Mac/Windows adds this DNS alias automatically). On Linux, add
+# `extra_hosts: - "host.docker.internal:host-gateway"` — already set below.
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    image: iceq-server:latest
+    container_name: iceq-server
+    ports:
+      - "8080:8080"
+    environment:
+      LLM_URL: http://host.docker.internal:11434/api/chat
+      SFT_MODEL: ${SFT_MODEL:-iceq-sft}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  cli:
+    build:
+      context: .
+      dockerfile: Dockerfile.cli
+    image: iceq-cli:latest
+    container_name: iceq-cli
+    # TUI requires an interactive TTY
+    stdin_open: true
+    tty: true
+    environment:
+      LLM_URL: http://host.docker.internal:11434/api/chat
+      LLM_MODEL: ${LLM_MODEL:-qwen3:4b-thinking-2507-q8_0}
+      TERM: xterm-256color
+    # Mount the user's current directory as /workspace so agent can
+    # read/write project files. The default `.` resolves to wherever
+    # `docker compose run cli` is invoked from.
+    volumes:
+      - ${PWD}:/workspace
+    working_dir: /workspace
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Don't start with the stack — use `docker compose run --rm cli`
+    profiles: ["cli"]

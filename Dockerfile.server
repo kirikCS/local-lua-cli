@@ -1,0 +1,38 @@
+# syntax=docker/dockerfile:1
+#
+# iceq-server — single-shot Lua code generation via POST /generate.
+# No lua/luacheck needed here (the server does no sandbox validation).
+
+FROM python:3.11-slim AS server
+
+WORKDIR /app
+
+# Minimal deps for fastapi + ollama client
+RUN pip install --no-cache-dir \
+        fastapi==0.135.3 \
+        "uvicorn[standard]==0.44.0" \
+        requests==2.32.3 \
+        rich==13.9.4 \
+        pyfiglet==1.0.3 \
+        pyperclip==1.9.0
+
+# Copy package (pyproject + sources). We skip `textual`/`pyperclip` clipboard
+# extras that are TUI-only — they're harmless if present but not needed.
+COPY pyproject.toml ./
+COPY localscript ./localscript
+
+# Install in editable-free mode (just put the package on PYTHONPATH)
+ENV PYTHONPATH=/app
+
+# Point at host's Ollama. Users override via docker-compose env.
+ENV LLM_URL=http://host.docker.internal:11434/api/chat
+ENV SFT_MODEL=iceq-sft
+ENV MEMORY_EMBEDDINGS=0
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/docs', timeout=3)" || exit 1
+
+ENTRYPOINT ["python3", "-m", "localscript.server"]
+CMD ["--host", "0.0.0.0", "--port", "8080"]

@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+.venv/
+.claude/
+.localscript_work/
+.iceq/
+*.egg-info/
+dist/
+build/
+data/
+!localscript/data/
+test_lua/
+# Keep models/ tracked as a directory (for Modelfile) but exclude GGUFs
+models/*
+!models/Modelfile
+!models/.gitkeep
+*.gguf
+*.zip
+.env
+qwen3-4b-thinking-bf16/

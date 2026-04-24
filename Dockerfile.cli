@@ -1,0 +1,48 @@
+# syntax=docker/dockerfile:1
+#
+# iceq — interactive TUI/REPL agent. Needs lua5.4 + luacheck for the
+# auto-sandbox validation step. Run with: docker compose run --rm cli
+
+FROM python:3.11-slim AS cli
+
+WORKDIR /workspace
+
+# System tools: lua 5.4 runtime + luacheck static analyser + luarocks for
+# installing Lua packages from inside the agent (install_package tool).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        lua5.4 \
+        luarocks \
+        build-essential \
+        libreadline-dev \
+        git \
+    && luarocks install luacheck \
+    && apt-get remove -y build-essential libreadline-dev \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python deps (full TUI stack — textual for the live display)
+RUN pip install --no-cache-dir \
+        rich==13.9.4 \
+        requests==2.32.3 \
+        pyfiglet==1.0.3 \
+        textual==1.0.0 \
+        pyperclip==1.9.0
+
+# Copy package
+COPY pyproject.toml ./app/
+COPY localscript ./app/localscript
+COPY dkjson.lua ./app/
+
+ENV PYTHONPATH=/app
+
+# Point at host's Ollama. Users override via docker-compose env.
+ENV LLM_URL=http://host.docker.internal:11434/api/chat
+ENV LLM_MODEL=qwen3:4b-thinking-2507-q8_0
+ENV MEMORY_EMBEDDINGS=0
+ENV TERM=xterm-256color
+
+# The working directory is /workspace so the user's project files live
+# under a mountable path: `docker compose run cli` from the project root
+# will have their files available.
+
+ENTRYPOINT ["python3", "-m", "localscript.main"]

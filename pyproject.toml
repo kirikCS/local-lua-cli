@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "localscript"
+version = "0.5.0"
+description = "ICEQ - Lua Code Agent"
+requires-python = ">=3.11"
+dependencies = ["rich>=13.0", "requests>=2.28", "pyfiglet>=1.0", "textual>=1.0", "pyperclip>=1.8", "fastapi>=0.100", "uvicorn>=0.20"]
+
+[project.scripts]
+iceq = "localscript.main:main"
+iceq-server = "localscript.server:main"
+
+[tool.setuptools.packages.find]
+include = ["localscript*"]
+
+[tool.setuptools.package-data]
+localscript = ["prompt.txt", "data/*.json"]
